@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="sun_calculator",
-    version="0.0.1",
+    version="0.0.2",
     author="Seojin Kim",
     author_email="sjkim@conalog.com",
     description="Sun Calculator for Digital Twin",

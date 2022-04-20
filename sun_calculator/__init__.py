@@ -31,6 +31,9 @@ DAY_IN_MS = 1000 * 60 * 60 * 24
 J1970 = 2440588
 J2000 = 2451545
 
+AU = 1.49598e11 # m
+ECCENTRICITY = 0.0167086
+
 
 def to_milliseconds(date: 'datetime|np.ndarray') -> 'int|np.ndarray':
     # datetime.datetime
@@ -132,7 +135,11 @@ def sun_coords(d):
     M = solar_mean_anomaly(d)
     L = ecliptic_longitude(M)
 
-    return {'dec': declination(L, 0), 'ra': right_ascension(L, 0)}
+    return {
+        'dec': declination(L, 0),
+        'ra': right_ascension(L, 0),
+        "distance": AU * (1 - ECCENTRICITY**2.) / (1 + ECCENTRICITY * cos(M))
+    }
 
 
 # calculations for sun times
@@ -178,8 +185,10 @@ def get_position(date, lng, lat):
     H = sidereal_time(d, lw) - c['ra']
 
     return {
-        'azimuth': azimuth(H, phi, c['dec']),
-        'altitude': altitude(H, phi, c['dec'])}
+        'azimuth': azimuth(H, phi, c['dec']) / rad + 180.,
+        'altitude': altitude(H, phi, c['dec']) / rad,
+        "distance": c["distance"]
+    }
 
 
 def get_times(
