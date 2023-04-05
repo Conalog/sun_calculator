@@ -22,8 +22,8 @@ DEFAULT_TIMES = (
     (-0.3, 'sunrise_end', 'sunset_start'),
     (-6, 'dawn', 'dusk'),
     (-12, 'nautical_dawn', 'nautical_dusk'),
-    (-18, 'night_end', 'night'),
-    (6, 'golden_hour_end', 'golden_hour')
+    (-18, 'night_end', 'night_start'),
+    (6, 'golden_hour_end', 'golden_hour_start')
 ) # yapf: disable
 
 # date/time constants and conversions
@@ -239,7 +239,7 @@ def get_times(
 
     result = {
         'solar_noon': from_julian(Jnoon),
-        'nadir': from_julian(Jnoon - 0.5)}
+        'solar_midnight': from_julian(Jnoon - 0.5)}
 
     angles = np.array([time[0] for time in times])
     h0 = (angles + dh) * rad
