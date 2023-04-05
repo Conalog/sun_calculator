@@ -38,6 +38,8 @@ ECCENTRICITY = 0.0167086
 def to_milliseconds(date: 'datetime|np.ndarray') -> 'int|np.ndarray':
     # datetime.datetime
     if isinstance(date, datetime):
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
         return int(date.timestamp() * 1000)
 
     # Numpy datetime64
