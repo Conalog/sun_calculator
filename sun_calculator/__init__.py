@@ -42,7 +42,7 @@ def to_milliseconds(date: 'datetime|np.ndarray') -> 'int|np.ndarray':
 
     # Numpy datetime64
     if np.issubdtype(date.dtype, np.datetime64):
-        return date.astype('datetime64[ms]').astype('int')
+        return date.astype('datetime64[ms]').astype('int64')
 
     raise ValueError(f'Unknown date type: {type(date)}')
 
