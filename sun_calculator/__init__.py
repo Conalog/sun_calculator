@@ -32,8 +32,9 @@ J1970 = 2440588
 J2000 = 2451545
 
 AU = 1.49598e11 # m
+AU_2 = 2.23796e22 # m^2
 ECCENTRICITY = 0.0167086
-
+AU_ECCENTRICITY = 1.4955624e11 # AU * (1- ECCENTRICITY^2)
 
 def to_milliseconds(date: 'datetime|np.ndarray') -> 'int|np.ndarray':
     # datetime.datetime
@@ -140,7 +141,8 @@ def sun_coords(d):
     return {
         'dec': declination(L, 0),
         'ra': right_ascension(L, 0),
-        "distance": AU * (1 - ECCENTRICITY**2.) / (1 + ECCENTRICITY * cos(M))
+        "distance": AU_ECCENTRICITY / (1 + ECCENTRICITY * cos(M))
+                    #AU * (1 - ECCENTRICITY**2.) / (1 + ECCENTRICITY * cos(M))
     }
 
 
