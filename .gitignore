@@ -133,7 +133,6 @@ dmypy.json
 .pyre/
 
 *.png
-*.json
 *.csv
 *.dat
 *_test.py
