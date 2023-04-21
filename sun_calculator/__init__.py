@@ -1,10 +1,11 @@
-from datetime import datetime, timezone
-import numpy as np
 from collections import namedtuple
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 if TYPE_CHECKING:
-    from typing import Iterable, Any
+    from typing import Iterable
 
 # shortcuts for easier to read formulas
 PI = np.pi
@@ -18,25 +19,26 @@ rad = PI / 180
 
 # sun times configuration (angle, morning name, evening name)
 DEFAULT_TIMES = (
-    (-0.833, 'sunrise', 'sunset'),
-    (-0.3, 'sunrise_end', 'sunset_start'),
-    (-6, 'dawn', 'dusk'),
-    (-12, 'nautical_dawn', 'nautical_dusk'),
-    (-18, 'night_end', 'night_start'),
-    (6, 'golden_hour_end', 'golden_hour_start')
-) # yapf: disable
+    (-0.833, "sunrise", "sunset"),
+    (-0.3, "sunrise_end", "sunset_start"),
+    (-6, "dawn", "dusk"),
+    (-12, "nautical_dawn", "nautical_dusk"),
+    (-18, "night_end", "night_start"),
+    (6, "golden_hour_end", "golden_hour_start"),
+)  # yapf: disable
 
 # date/time constants and conversions
 DAY_IN_MS = 1000 * 60 * 60 * 24
 J1970 = 2440588
 J2000 = 2451545
 
-AU = 1.49598e11 # m
-AU_2 = 2.23796e22 # m^2
+AU = 1.49598e11  # m
+AU_2 = 2.23796e22  # m^2
 ECCENTRICITY = 0.0167086
-AU_ECCENTRICITY = 1.4955624e11 # AU * (1- ECCENTRICITY^2)
+AU_ECCENTRICITY = 1.4955624e11  # AU * (1- ECCENTRICITY^2)
 
-def to_milliseconds(date: 'datetime|np.ndarray') -> 'int|np.ndarray':
+
+def to_milliseconds(date: "datetime|np.ndarray") -> "int|np.ndarray":
     # datetime.datetime
     if isinstance(date, datetime):
         if date.tzinfo is None:
@@ -45,30 +47,38 @@ def to_milliseconds(date: 'datetime|np.ndarray') -> 'int|np.ndarray':
 
     # Numpy datetime64
     if np.issubdtype(date.dtype, np.datetime64):
-        return date.astype('datetime64[ms]').astype('int64')
+        return date.astype("datetime64[ms]").astype("int64")
 
-    raise ValueError(f'Unknown date type: {type(date)}')
+    raise ValueError(f"Unknown date type: {type(date)}")
 
 
-def to_julian(date: 'datetime|np.ndarray') -> 'float|np.ndarray':
+def to_julian(date: "datetime|np.ndarray") -> "float|np.ndarray":
     return to_milliseconds(date) / DAY_IN_MS - 0.5 + J1970
 
 
-def from_julian(j: 'float|np.ndarray') -> 'datetime|np.ndarray':
+def from_julian(j: "float|np.ndarray") -> "datetime|np.ndarray":
     ms_date = (j + 0.5 - J1970) * DAY_IN_MS
     # ms_date could be iterable
     try:
-        return np.array([
-            datetime.utcfromtimestamp(x / 1000)
-            if not np.isnan(x) else np.datetime64('NaT') for x in ms_date
-        ], dtype=np.datetime64)
+        return np.array(
+            [
+                datetime.utcfromtimestamp(x / 1000)
+                if not np.isnan(x)
+                else np.datetime64("NaT")
+                for x in ms_date
+            ],
+            dtype=np.datetime64,
+        )
 
     except TypeError:
-        return datetime.fromtimestamp(ms_date / 1000, tz=timezone.utc) \
-            if not np.isnan(ms_date) else np.datetime64('NaT')
+        return (
+            datetime.fromtimestamp(ms_date / 1000, tz=timezone.utc)
+            if not np.isnan(ms_date)
+            else np.datetime64("NaT")
+        )
 
 
-def to_days_since_j2000(date: 'datetime|np.ndarray') -> 'float|np.ndarray':
+def to_days_since_j2000(date: "datetime|np.ndarray") -> "float|np.ndarray":
     return to_julian(date) - J2000
 
 
@@ -90,8 +100,10 @@ def declination(l, b):
     return asin(sin(b) * cos(e) + cos(b) * sin(e) * sin(l))
 
 
-def ecliptic2equatorial(coord_ecliptic: 'CoordEcliptic'):
-    return CoordEquatorial(right_ascension(*coord_ecliptic), declination(*coord_ecliptic))
+def ecliptic2equatorial(coord_ecliptic: "CoordEcliptic"):
+    return CoordEquatorial(
+        right_ascension(*coord_ecliptic), declination(*coord_ecliptic)
+    )
 
 
 def azimuth(ha, phi, dec):
@@ -139,10 +151,10 @@ def sun_coords(d):
     L = ecliptic_longitude(M)
 
     return {
-        'dec': declination(L, 0),
-        'ra': right_ascension(L, 0),
+        "dec": declination(L, 0),
+        "ra": right_ascension(L, 0),
         "distance": AU_ECCENTRICITY / (1 + ECCENTRICITY * cos(M))
-                    #AU * (1 - ECCENTRICITY**2.) / (1 + ECCENTRICITY * cos(M))
+        # AU * (1 - ECCENTRICITY**2.) / (1 + ECCENTRICITY * cos(M))
     }
 
 
@@ -171,36 +183,31 @@ def observer_angle(height):
 
 
 def get_set_j(h, lw, phi, dec, n, M, L):
-    """Get set time for the given sun altitude
-    """
+    """Get set time for the given sun altitude"""
     w = hour_angle(h, phi, dec)
     a = approx_transit(w, lw, n)
     return solar_transit_j(a, M, L)
 
 
 def get_position(date, lng, lat):
-    """Calculate sun position for a given date and latitude/longitude
-    """
+    """Calculate sun position for a given date and latitude/longitude"""
     lw = rad * -lng
     phi = rad * lat
     d = to_days_since_j2000(date)
 
     c = sun_coords(d)
-    H = sidereal_time(d, lw) - c['ra']
+    H = sidereal_time(d, lw) - c["ra"]
 
     return {
-        'azimuth': azimuth(H, phi, c['dec']) / rad + 180.,
-        'altitude': altitude(H, phi, c['dec']) / rad,
-        "distance": c["distance"]
+        "azimuth": azimuth(H, phi, c["dec"]) / rad + 180.0,
+        "altitude": altitude(H, phi, c["dec"]) / rad,
+        "distance": c["distance"],
     }
 
 
 def get_times(
-        date,
-        lng,
-        lat,
-        height=0,
-        times: 'Iterable[tuple[float, str, str]]' = None):
+    date, lng, lat, height=0, times: "Iterable[tuple[float, str, str]]" = None
+):
     """Calculate sun times
 
     Calculate sun times for a given date, latitude/longitude, and,
@@ -240,8 +247,9 @@ def get_times(
     Jnoon = solar_transit_j(ds, M, L)
 
     result = {
-        'solar_noon': from_julian(Jnoon),
-        'solar_midnight': from_julian(Jnoon - 0.5)}
+        "solar_noon": from_julian(Jnoon),
+        "solar_midnight": from_julian(Jnoon - 0.5),
+    }
 
     angles = np.array([time[0] for time in times])
     h0 = (angles + dh) * rad
