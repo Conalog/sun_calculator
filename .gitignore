@@ -137,3 +137,5 @@ dmypy.json
 *.dat
 *_test.py
 data/
+
+.vscode/settings.json
